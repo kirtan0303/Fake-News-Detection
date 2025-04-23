@@ -1,0 +1,158 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h1 class="h3 mb-0">Fake News Detector</h1>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">
+                            Enter a news article or text to analyze whether it's likely to be real or fake news.
+                        </p>
+                        
+                        <form action="/predict" method="post">
+                            <div class="mb-3">
+                                <label for="text" class="form-label">News Text</label>
+                                <textarea class="form-control" id="text" name="text" rows="10" required
+                                    placeholder="Paste a news article or text here..."></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Analyze</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <p class="mb-0 small">
+                            This tool uses machine learning models (Naive Bayes and Random Forest) to detect potential fake news.
+                            The accuracy is not perfect - always verify information from trusted sources.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h2 class="h4">How it works</h2>
+                    <p>
+                        Our fake news detector uses a combination of Naive Bayes and Random Forest models 
+                        trained on a dataset of verified real and fake news articles. The system:
+                    </p>
+                    <ol>
+                        <li>Preprocesses your text (removing stopwords, stemming, etc.)</li>
+                        <li>Extracts features using TF-IDF vectorization</li>
+                        <li>Runs your text through both models</li>
+                        <li>Combines results for higher accuracy</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<!-- result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detector - Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h1 class="h3 mb-0">Analysis Results</h1>
+                        <a href="/" class="btn btn-outline-light btn-sm">New Analysis</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert {{ 'alert-success' if results['combined']['prediction'] == 'Real' else 'alert-danger' }} mb-4">
+                            <h2 class="h4">Overall Result: 
+                                <strong>{{ results['combined']['prediction'] }} News</strong>
+                                ({{ results['combined']['confidence'] }}% confidence)
+                            </h2>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h3 class="h5 mb-0">Naive Bayes Model</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Prediction: <strong>{{ results['naive_bayes']['prediction'] }}</strong></p>
+                                        <p>Confidence: {{ results['naive_bayes']['confidence'] }}%</p>
+                                        <div class="progress">
+                                            <div class="progress-bar {{ 'bg-success' if results['naive_bayes']['prediction'] == 'Real' else 'bg-danger' }}" 
+                                                role="progressbar" 
+                                                style="width: {{ results['naive_bayes']['confidence'] }}%" 
+                                                aria-valuenow="{{ results['naive_bayes']['confidence'] }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h3 class="h5 mb-0">Random Forest Model</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Prediction: <strong>{{ results['random_forest']['prediction'] }}</strong></p>
+                                        <p>Confidence: {{ results['random_forest']['confidence'] }}%</p>
+                                        <div class="progress">
+                                            <div class="progress-bar {{ 'bg-success' if results['random_forest']['prediction'] == 'Real' else 'bg-danger' }}" 
+                                                role="progressbar" 
+                                                style="width: {{ results['random_forest']['confidence'] }}%" 
+                                                aria-valuenow="{{ results['random_forest']['confidence'] }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="h5">Analyzed Text</h3>
+                            <div class="border rounded p-3 bg-light">
+                                <p class="mb-0">{{ results['text'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <p class="mb-0 small">
+                            <strong>Note:</strong> This tool provides an estimate based on statistical patterns learned from a dataset.
+                            Always verify news from multiple reliable sources.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <a href="/" class="btn btn-primary">Analyze Another Article</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
